@@ -1,0 +1,158 @@
+[
+  {
+    "id": "node_moewardi",
+    "name": "RSUD Dr. Moewardi",
+    "type": "RS",
+    "lat": -7.5583,
+    "lon": 110.8402,
+    "stock": {
+      "A": 15,
+      "B": 10,
+      "AB": 5,
+      "O": 20
+    },
+    "operational_hours": {
+      "is_24h": true,
+      "open": "00:00",
+      "close": "23:59"
+    },
+    "connections": [
+      {"to": "node_pmi_solo", "distance": 1.5},
+      {"to": "node_joko", "distance": 3.0}
+    ]
+  },
+  {
+    "id": "node_pmi_solo",
+    "name": "PMI Kota Surakarta",
+    "type": "UTD_PMI",
+    "lat": -7.5552,
+    "lon": 110.8353,
+    "stock": {
+      "A": 30,
+      "B": 25,
+      "AB": 15,
+      "O": 40
+    },
+    "operational_hours": {
+      "is_24h": true,
+      "open": "00:00",
+      "close": "23:59"
+    },
+    "connections": [
+      {"to": "node_moewardi", "distance": 1.5},
+      {"to": "node_pku", "distance": 3.5},
+      {"to": "node_kasih_ibu", "distance": 3.8}
+    ]
+  },
+  {
+    "id": "node_kasih_ibu",
+    "name": "RS Kasih Ibu Surakarta",
+    "type": "RS",
+    "lat": -7.5658,
+    "lon": 110.8118,
+    "stock": {
+      "A": 5,
+      "B": 8,
+      "AB": 2,
+      "O": 10
+    },
+    "operational_hours": {
+      "is_24h": true,
+      "open": "00:00",
+      "close": "23:59"
+    },
+    "connections": [
+      {"to": "node_pku", "distance": 0.8},
+      {"to": "node_dkt", "distance": 0.3},
+      {"to": "node_pmi_solo", "distance": 3.8}
+    ]
+  },
+  {
+    "id": "node_pku",
+    "name": "RS PKU Muhammadiyah Surakarta",
+    "type": "RS",
+    "lat": -7.5684,
+    "lon": 110.8173,
+    "stock": {
+      "A": 10,
+      "B": 5,
+      "AB": 3,
+      "O": 12
+    },
+    "operational_hours": {
+      "is_24h": true,
+      "open": "00:00",
+      "close": "23:59"
+    },
+    "connections": [
+      {"to": "node_kasih_ibu", "distance": 0.8},
+      {"to": "node_pmi_solo", "distance": 3.5},
+      {"to": "node_sri", "distance": 2.5}
+    ]
+  },
+  {
+    "id": "node_dkt",
+    "name": "RS DKT Slamet Riyadi",
+    "type": "RS",
+    "lat": -7.5665,
+    "lon": 110.8105,
+    "stock": {
+      "A": 2,
+      "B": 4,
+      "AB": 1,
+      "O": 6
+    },
+    "operational_hours": {
+      "is_24h": false,
+      "open": "08:00",
+      "close": "20:00"
+    },
+    "connections": [
+      {"to": "node_kasih_ibu", "distance": 0.3}
+    ]
+  },
+  {
+    "id": "node_joko",
+    "name": "Donor Sukarela Joko",
+    "type": "DonorSukarela",
+    "lat": -7.5750,
+    "lon": 110.8250,
+    "stock": {
+      "A": 0,
+      "B": 1,
+      "AB": 0,
+      "O": 0
+    },
+    "operational_hours": {
+      "is_24h": false,
+      "open": "09:00",
+      "close": "17:00"
+    },
+    "connections": [
+      {"to": "node_moewardi", "distance": 3.0},
+      {"to": "node_sri", "distance": 1.5}
+    ]
+  },
+  {
+    "id": "node_sri",
+    "name": "Donor Sukarela Sri",
+    "type": "DonorSukarela",
+    "lat": -7.5800,
+    "lon": 110.8300,
+    "stock": {
+      "A": 1,
+      "B": 0,
+      "AB": 0,
+      "O": 0
+    },
+    "operational_hours": {
+      "is_24h": false,
+      "open": "10:00",
+      "close": "18:00"
+    },
+    "connections": [
+      {"to": "node_joko", "distance": 1.5},
+      {"to": "node_pku", "distance": 2.5}
+    ]
+  }
+]

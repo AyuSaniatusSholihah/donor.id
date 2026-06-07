@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Pencarian Donor Darah (A* & BFS)</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-area">
+                    <i class="fa-solid fa-droplet icon-droplet"></i>
+                    <h2>BloodFinder</h2>
+                </div>
+                <p class="subtitle">Sistem Pencarian Donor Darah Rute Terdekat</p>
+            </div>
+
+            <div class="sidebar-content">
+                <!-- Search Form -->
+                <form id="search-form" class="search-form">
+                    <div class="form-group">
+                        <label for="start-node"><i class="fa-solid fa-location-dot"></i> Titik Awal Pencarian</label>
+                        <select id="start-node" required>
+                            <option value="" disabled selected>Pilih Lokasi Awal...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label for="blood-type"><i class="fa-solid fa-heart"></i> Gol. Darah</label>
+                            <select id="blood-type" required>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="AB">AB</option>
+                                <option value="O">O</option>
+                            </select>
+                        </div>
+                        <div class="form-group half">
+                            <label for="quantity"><i class="fa-solid fa-box-tissue"></i> Jumlah (Kantong)</label>
+                            <input type="number" id="quantity" min="1" value="1" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label for="current-time"><i class="fa-solid fa-clock"></i> Waktu Sekarang</label>
+                            <input type="time" id="current-time" required>
+                        </div>
+                        <div class="form-group half">
+                            <label for="algorithm"><i class="fa-solid fa-route"></i> Algoritma</label>
+                            <select id="algorithm" required>
+                                <option value="astar">A* Search</option>
+                                <option value="bfs">BFS Search</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-search">
+                        <i class="fa-solid fa-magnifying-glass"></i> Cari Fasilitas
+                    </button>
+                </form>
+
+                <!-- Results Area -->
+                <div id="result-card" class="result-card hidden">
+                    <h3 class="result-title"><i class="fa-solid fa-square-poll-horizontal"></i> Hasil Pencarian</h3>
+                    <div class="result-status success" id="result-status"></div>
+                    
+                    <div class="result-metrics">
+                        <div class="metric">
+                            <span class="metric-label">Jarak Total</span>
+                            <span class="metric-value" id="metric-distance">-</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Node Dikunjungi</span>
+                            <span class="metric-value" id="metric-visited">-</span>
+                        </div>
+                    </div>
+
+                    <!-- Steps list -->
+                    <div class="path-details">
+                        <h4><i class="fa-solid fa-stairs"></i> Rute Jalur Terpendek</h4>
+                        <ol id="path-steps" class="path-steps"></ol>
+                    </div>
+                </div>
+
+                <!-- Legend Area -->
+                <div class="legend-card">
+                    <h4><i class="fa-solid fa-info-circle"></i> Legenda Peta</h4>
+                    <ul class="legend-list">
+                        <li><span class="legend-color rs"></span> Rumah Sakit (RS)</li>
+                        <li><span class="legend-color pmi"></span> UTD PMI</li>
+                        <li><span class="legend-color volunteer"></span> Donor Sukarela</li>
+                        <li><span class="legend-color path"></span> Jalur Rute Hasil Pencarian</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="sidebar-footer">
+                <p>&copy; 2026 BloodFinder A* &amp; BFS</p>
+            </div>
+        </aside>
+
+        <!-- Map Area -->
+        <main class="map-container">
+            <div id="map"></div>
+        </main>
+    </div>
+
+    <!-- Leaflet.js Script -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Custom JS -->
+    <script src="app.js"></script>
+</body>
+</html>
