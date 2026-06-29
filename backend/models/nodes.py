@@ -41,8 +41,8 @@ class BaseNode(BaseModel):
     def has_stock(self, blood_type: str, qty: int) -> bool:
         return self.stock.get(blood_type, 0) >= qty
 
-class RS(BaseNode):
-    type: str = "RS"
+class BDRS(BaseNode):
+    type: str = "BDRS"
 
 class UTD_PMI(BaseNode):
     type: str = "UTD_PMI"

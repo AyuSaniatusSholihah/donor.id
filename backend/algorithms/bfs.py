@@ -1,65 +1,93 @@
+"""
+Implementasi BFS (Breadth-First Search) untuk sistem DonorinSolo.
+
+BFS standar:
+  - FIFO Queue
+  - Level-order traversal (tanpa heuristik)
+  - Berhenti di node PERTAMA yang memenuhi:
+      1. Stok golongan darah yang diminta >= qty
+      2. Sedang buka pada current_time
+
+BFS mengunjungi lebih BANYAK node dibanding A* karena tidak memiliki panduan
+heuristik — perbedaan ini terlihat jelas pada animasi Leaflet.
+"""
+
 from collections import deque
-from typing import Dict, List, Optional, Tuple, Set
+from typing import Any, Dict, List, Optional, Tuple
+
 from models.graph import GrafDonorDarah
+from algorithms.heuristic import path_distance
+
+
+# Alias tipe untuk konsistensi dengan A*
+HeuristicDetails = Dict[str, Dict[str, Any]]
+
 
 def bfs_search(
     graph: GrafDonorDarah,
     start_id: str,
     blood_type: str,
     qty: int,
-    current_time: str
-) -> Tuple[Optional[List[str]], List[str], float, Optional[str]]:
+    current_time: str,
+) -> Tuple[Optional[List[str]], List[str], float, Optional[str], HeuristicDetails]:
     """
-    Breadth-First Search to find the nearest blood donor node matching stock and time criteria.
-    Returns: (path, visited, total_distance, target_id)
+    BFS Search — FIFO Queue murni.
+
+    Returns:
+        path             : daftar node_id dari start ke target (None jika tidak ditemukan)
+        visited_list     : urutan node_id yang dikunjungi (level-order)
+        total_distance   : total jarak aktual sepanjang path (km)
+        target_id        : node_id tujuan (None jika tidak ditemukan)
+        heuristic_details: dict {node_id: {node, g, h=null, f}} untuk animasi Leaflet
+                           BFS tidak menggunakan heuristik, jadi h=null dan f=g.
     """
     if start_id not in graph.nodes:
-        return None, [], 0.0, None
+        return None, [], 0.0, None, {}
 
-    visited_list = []
+    bt = blood_type.upper()
+
+    # FIFO queue: setiap entry adalah path lengkap dari start ke node saat ini
+    queue: deque[List[str]] = deque([[start_id]])
     visited_set = {start_id}
-    queue = deque([[start_id]])
-    
-    # Trace path distance
-    # We will map child_id -> parent_id to reconstruct path and also store distance
-    parent_map: Dict[str, Tuple[Optional[str], float]] = {start_id: (None, 0.0)}
+    visited_list: List[str] = []
 
-    target_id = None
-    final_path = None
+    # Jarak aktual dari start ke setiap node (diupdate saat enqueue)
+    dist_from_start: Dict[str, float] = {start_id: 0.0}
+
+    # Detail g/h/f untuk visualisasi Leaflet (h=None karena BFS tidak pakai heuristik)
+    heuristic_details: HeuristicDetails = {}
 
     while queue:
         path = queue.popleft()
-        current_node_id = path[-1]
-        
-        visited_list.append(current_node_id)
-        current_node = graph.get_node(current_node_id)
+        curr_id = path[-1]
 
-        # Check if current node satisfies search criteria
-        if current_node.has_stock(blood_type, qty) and current_node.operational_hours.is_open(current_time):
-            target_id = current_node_id
-            final_path = path
-            break
+        visited_list.append(curr_id)
+        curr_node = graph.get_node(curr_id)
+        g = dist_from_start[curr_id]
 
-        for neighbor_id, dist in graph.get_neighbors(current_node_id):
+        # Catat detail node untuk Leaflet (h=None karena tidak ada heuristik di BFS)
+        heuristic_details[curr_id] = {
+            "node": curr_node.name,
+            "g": round(g, 4),
+            "h": None,       # BFS tidak menggunakan heuristik
+            "f": round(g, 4),  # f = g (tanpa h)
+        }
+
+        # ✅ Cek goal: stok cukup DAN sedang buka (kriteria sama dengan A*), tapi bukan titik asal
+        if (
+            curr_id != start_id
+            and curr_node.stock.get(bt, 0) >= qty
+            and curr_node.operational_hours.is_open(current_time)
+        ):
+            total_dist = path_distance(graph, path)
+            return path, visited_list, total_dist, curr_id, heuristic_details
+
+        # Ekspansi tetangga — murni FIFO, tanpa prioritas apapun
+        for neighbor_id, edge_dist in graph.get_neighbors(curr_id):
             if neighbor_id not in visited_set:
                 visited_set.add(neighbor_id)
-                parent_map[neighbor_id] = (current_node_id, dist)
-                new_path = list(path)
-                new_path.append(neighbor_id)
-                queue.append(new_path)
+                dist_from_start[neighbor_id] = g + edge_dist
+                queue.append(path + [neighbor_id])
 
-    if not final_path:
-        return None, visited_list, 0.0, None
-
-    # Calculate total path distance
-    total_dist = 0.0
-    for i in range(len(final_path) - 1):
-        u = final_path[i]
-        v = final_path[i+1]
-        # find weight from u to v
-        for neighbor, weight in graph.get_neighbors(u):
-            if neighbor == v:
-                total_dist += weight
-                break
-
-    return final_path, visited_list, total_dist, target_id
+    # Tidak ditemukan node yang memenuhi syarat
+    return None, visited_list, 0.0, None, heuristic_details

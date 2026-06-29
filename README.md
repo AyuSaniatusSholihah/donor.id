@@ -1,93 +1,141 @@
-# Sistem Pencarian Donor Darah (A* & BFS) 🩸
+# BloodFinder - Sistem Pencarian Donor Darah
 
-Aplikasi web untuk mencari rute terdekat ke fasilitas donor darah (Rumah Sakit, UTD PMI, atau Donor Sukarela) berdasarkan **golongan darah**, **stok ketersediaan**, dan **jam operasional**. Sistem ini menggunakan dua algoritma pencarian rute: **A-Star (A*)** dan **Breadth-First Search (BFS)**.
+BloodFinder adalah aplikasi web untuk mencari fasilitas donor darah terdekat berdasarkan lokasi awal, golongan darah, jumlah kantong, dan waktu pencarian. Aplikasi ini memakai FastAPI sebagai backend dan Leaflet sebagai peta interaktif di frontend.
 
----
+## Fitur Utama
 
-## 📂 Struktur Direktori Program
+- Pencarian dengan algoritma A* saja.
+- Pencarian dengan algoritma BFS saja.
+- Mode perbandingan A* vs BFS dengan panel map, tree eksplorasi, dan tabel metrik.
+- Visualisasi node fasilitas donor pada peta global.
+- Animasi eksplorasi node sebelum rute hasil ditampilkan.
+- Panel tree untuk melihat proses eksplorasi algoritma.
+- Checklist untuk menampilkan struktur graf atau edge antar node.
+- Filter berdasarkan golongan darah, stok kantong, dan jam operasional.
 
-Untuk memudahkan modifikasi, berikut adalah struktur folder dari aplikasi ini:
+## Teknologi
+
+- Backend: Python, FastAPI, Pydantic, Uvicorn.
+- Frontend: HTML, CSS, JavaScript.
+- Peta: Leaflet dan CartoDB Dark Matter tiles.
+- Visualisasi tree: D3.js.
+
+## Struktur Project
 
 ```text
 donor_darah/
-│
-├── backend/                  # Folder utama untuk logika server dan algoritma (Python)
-│   ├── algorithms/           # Implementasi algoritma pencarian rute
-│   │   ├── astar.py          # Logika algoritma A* Search
-│   │   └── bfs.py            # Logika algoritma BFS Search
-│   ├── data/
-│   │   ├── nodes.json        # 🗄️ DATABASE LOKASI: Tempat menyimpan data RS/PMI & Stok Darah
-│   │   └── loader.py         # Skrip untuk membaca nodes.json ke dalam struktur graf
-│   ├── models/               # Model data (Struktur Objek)
-│   │   ├── graph.py          # Struktur data Graf (Nodes & Edges)
-│   │   └── nodes.py          # Definisi objek lokasi (RS, PMI, Sukarela)
-│   ├── routers/
-│   │   └── search.py         # API Endpoints (Menangani request dari frontend ke algoritma)
-│   ├── main.py               # 🚀 FILE UTAMA BACKEND: Konfigurasi FastAPI dan serve frontend
-│   └── requirements.txt      # Daftar library Python yang dibutuhkan
-│
-├── frontend/                 # Folder utama untuk antarmuka pengguna (HTML/JS)
-│   ├── index.html            # Kerangka UI (Sidebar dan Peta)
-│   ├── style.css             # Tampilan dan gaya visual
-│   └── app.js                # 🗺️ LOGIKA PETA: Integrasi Leaflet.js dan memanggil API
-│
-└── README.md                 # Dokumentasi yang sedang kamu baca
+  backend/
+    algorithms/
+      astar.py
+      bfs.py
+      heuristic.py
+    data/
+      loader.py
+      nodes.json
+    models/
+      graph.py
+      nodes.py
+    routers/
+      search.py
+    main.py
+    requirements.txt
+    run_interactive.py
+  frontend/
+    index.html
+    style.css
+    app.js
+  .gitignore
+  README.md
 ```
 
----
+Catatan kebersihan project: folder virtual environment seperti `backend/venv/` dan folder cache Python seperti `__pycache__/` tidak perlu masuk repository. File `.gitignore` sudah disiapkan untuk mencegah file seperti itu ikut tercatat ke depannya.
 
-## 🛠️ Panduan Mengedit untuk Developer
+## Cara Menjalankan
 
-Jika kamu ingin melakukan modifikasi pada program ini, berikut adalah panduan letak file yang harus kamu edit:
+Masuk ke folder backend:
 
-### 1. Menambah/Mengubah Data Lokasi & Stok Darah
-Buka file: **`backend/data/nodes.json`**
-- Di file ini kamu bisa menambahkan data Rumah Sakit atau PMI baru.
-- Pastikan mengisi properti `lat` (latitude) dan `lon` (longitude) dengan benar agar muncul di peta.
-- Bagian `connections` mengatur hubungan/jalur antar lokasi beserta jarak aslinya. Tambahkan ID lokasi tujuan di sini jika ada jalur baru.
-
-### 2. Mengubah Titik Fokus Peta (Map Center)
-Buka file: **`frontend/app.js`**
-- Cari fungsi `initMap()`.
-- Ubah koordinat di dalam fungsi `.setView([-7.5666, 110.8283], 14)` ke koordinat kota yang kamu inginkan (saat ini diset ke Surakarta).
-
-### 3. Mengubah Logika Pencarian Rute (A* & BFS)
-Buka folder: **`backend/algorithms/`**
-- Jika kamu ingin memperbaiki atau memodifikasi nilai fungsi heuristik A*, buka file `astar.py`.
-- Jika kamu ingin mengatur urutan kunjungan BFS, edit file `bfs.py`.
-
-### 4. Menambah Fitur API Baru
-Buka file: **`backend/routers/search.py`**
-- File ini adalah penghubung antara tombol "Cari" di frontend dengan algoritma Python di backend.
-- Jika ada penambahan parameter filter baru (misal: filter fasilitas yang buka 24 jam saja), tambahkan parameternya di endpoint `@router.get("/search")`.
-
----
-
-## 🚀 Cara Menjalankan Aplikasi
-
-Aplikasi ini menggunakan Python dengan framework FastAPI. Ikuti langkah di bawah untuk menjalankannya.
-
-**Langkah 1: Masuk ke folder backend**
 ```bash
 cd backend
 ```
 
-**Langkah 2: Aktifkan Virtual Environment**
-- Windows: `.\venv\Scripts\activate`
-- Mac/Linux: `source venv/bin/activate`
+Buat dan aktifkan virtual environment jika belum ada:
 
-**Langkah 3: Install Dependencies (Jika belum)**
+```bash
+python -m venv venv
+.\venv\Scripts\activate
+```
+
+Install dependency:
+
 ```bash
 pip install -r requirements.txt
 ```
 
-**Langkah 4: Jalankan Server FastAPI**
+Jalankan server:
+
 ```bash
 uvicorn main:app --reload
 ```
 
-**Langkah 5: Buka di Browser**
-Akses aplikasi melalui browser dengan URL:
-👉 **http://localhost:8000**
+Buka aplikasi di browser:
 
-*(Dokumentasi API untuk testing bisa diakses di: `http://localhost:8000/docs`)*
+```text
+http://localhost:8000
+```
+
+Dokumentasi API otomatis tersedia di:
+
+```text
+http://localhost:8000/docs
+```
+
+## Endpoint API
+
+### GET `/api/nodes`
+
+Mengambil data node fasilitas dan edge graf.
+
+Response utama:
+
+```json
+{
+  "nodes": [],
+  "edges": []
+}
+```
+
+### GET `/api/search`
+
+Menjalankan pencarian rute donor darah.
+
+Query parameter:
+
+- `start_id`: ID node awal.
+- `blood_type`: golongan darah, misalnya `A`, `B`, `AB`, atau `O`.
+- `qty`: jumlah kantong darah yang dibutuhkan.
+- `current_time`: waktu pencarian dalam format `HH:MM`.
+- `algorithm`: `astar` atau `bfs`.
+
+Contoh:
+
+```text
+/api/search?start_id=rs1&blood_type=A&qty=1&current_time=09:00&algorithm=astar
+```
+
+## Data Lokasi
+
+Data fasilitas donor berada di:
+
+```text
+backend/data/nodes.json
+```
+
+Setiap node berisi informasi seperti ID, nama fasilitas, tipe, koordinat, stok darah, dan jam operasional. Edge graf dibentuk oleh backend dari data node untuk kebutuhan visualisasi dan pencarian.
+
+## Catatan Pengembangan
+
+- Jalankan perintah backend dari folder `backend/` karena import modul lokal disusun untuk konteks folder tersebut.
+- Jika mengubah frontend, refresh browser dengan hard reload agar asset versi terbaru dimuat.
+- Untuk menambah algoritma baru, letakkan implementasi di `backend/algorithms/` lalu hubungkan melalui `backend/routers/search.py`.
+- Untuk mengubah tampilan peta dan panel visualisasi, edit `frontend/style.css` dan `frontend/app.js`.
+- `backend/run_interactive.py` dapat dipakai sebagai helper CLI untuk membandingkan BFS dan A* tanpa membuka browser.

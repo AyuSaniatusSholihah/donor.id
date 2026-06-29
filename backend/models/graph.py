@@ -1,5 +1,5 @@
 from typing import Dict, List, Tuple
-from .nodes import BaseNode, RS, UTD_PMI, DonorSukarela
+from .nodes import BaseNode, BDRS, UTD_PMI, DonorSukarela
 
 class GrafDonorDarah:
     def __init__(self):

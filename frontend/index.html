@@ -13,7 +13,7 @@
     <!-- Leaflet.js CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=13">
 </head>
 <body>
     <div class="app-container">
@@ -54,46 +54,34 @@
                     </div>
 
                     <div class="form-row">
-                        <div class="form-group half">
+                        <div class="form-group">
                             <label for="current-time"><i class="fa-solid fa-clock"></i> Waktu Sekarang</label>
                             <input type="time" id="current-time" required>
                         </div>
-                        <div class="form-group half">
-                            <label for="algorithm"><i class="fa-solid fa-route"></i> Algoritma</label>
-                            <select id="algorithm" required>
-                                <option value="astar">A* Search</option>
-                                <option value="bfs">BFS Search</option>
-                            </select>
-                        </div>
                     </div>
+
+                    <div class="form-group">
+                        <label for="search-mode"><i class="fa-solid fa-route"></i> Mode Pencarian</label>
+                        <select id="search-mode" required>
+                            <option value="compare">Perbandingan A* vs BFS</option>
+                            <option value="astar">A* saja</option>
+                            <option value="bfs">BFS saja</option>
+                        </select>
+                    </div>
+
+                    <label class="checkbox-control" for="show-graph-edges">
+                        <input type="checkbox" id="show-graph-edges">
+                        <span class="checkbox-box"></span>
+                        <span>Tampilkan struktur graf / edge</span>
+                    </label>
 
                     <button type="submit" class="btn-search">
                         <i class="fa-solid fa-magnifying-glass"></i> Cari Fasilitas
                     </button>
+                    <button type="button" id="reset-map" class="btn-reset">
+                        <i class="fa-solid fa-rotate-left"></i> Reset Peta
+                    </button>
                 </form>
-
-                <!-- Results Area -->
-                <div id="result-card" class="result-card hidden">
-                    <h3 class="result-title"><i class="fa-solid fa-square-poll-horizontal"></i> Hasil Pencarian</h3>
-                    <div class="result-status success" id="result-status"></div>
-                    
-                    <div class="result-metrics">
-                        <div class="metric">
-                            <span class="metric-label">Jarak Total</span>
-                            <span class="metric-value" id="metric-distance">-</span>
-                        </div>
-                        <div class="metric">
-                            <span class="metric-label">Node Dikunjungi</span>
-                            <span class="metric-value" id="metric-visited">-</span>
-                        </div>
-                    </div>
-
-                    <!-- Steps list -->
-                    <div class="path-details">
-                        <h4><i class="fa-solid fa-stairs"></i> Rute Jalur Terpendek</h4>
-                        <ol id="path-steps" class="path-steps"></ol>
-                    </div>
-                </div>
 
                 <!-- Legend Area -->
                 <div class="legend-card">
@@ -102,6 +90,7 @@
                         <li><span class="legend-color rs"></span> Rumah Sakit (RS)</li>
                         <li><span class="legend-color pmi"></span> UTD PMI</li>
                         <li><span class="legend-color volunteer"></span> Donor Sukarela</li>
+                        <li><span class="legend-color graph-edge"></span> Edge Graf</li>
                         <li><span class="legend-color path"></span> Jalur Rute Hasil Pencarian</li>
                     </ul>
                 </div>
@@ -118,9 +107,135 @@
         </main>
     </div>
 
+    <!-- Fixed Exploration Panel -->
+    <section id="comparison-panel" class="exploration-panel hidden">
+        <div class="exploration-header">
+            <h3 class="result-title"><i class="fa-solid fa-sitemap"></i> Eksplorasi Tree &amp; Perbandingan</h3>
+            <span id="exploration-status" class="exploration-status">Menunggu pencarian</span>
+        </div>
+
+        <div id="map-section" class="exploration-map-section hidden">
+            <div class="exploration-map-grid">
+                <div class="map-card astar-map-card">
+                    <div class="map-card-title">Map A*</div>
+                    <div id="astar-mini-map" class="algorithm-map"></div>
+                </div>
+                <div class="map-card bfs-map-card">
+                    <div class="map-card-title">Map BFS</div>
+                    <div id="bfs-mini-map" class="algorithm-map"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tree-section" class="tree-section hidden">
+            <div class="tree-grid">
+                <div class="tree-card">
+                    <div class="tree-card-title">A*</div>
+                    <div id="astar-tree" class="tree-diagram"></div>
+                </div>
+                <div class="tree-card">
+                    <div class="tree-card-title">BFS</div>
+                    <div id="bfs-tree" class="tree-diagram"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="comparison-results" class="comparison-results hidden">
+            <div class="algorithm-cards">
+                <article class="algorithm-card astar-card">
+                    <div class="algorithm-card-header">
+                        <span>A*</span>
+                        <i class="fa-solid fa-location-arrow"></i>
+                    </div>
+                    <p class="facility-name" id="astar-facility">-</p>
+                    <div class="algorithm-metrics">
+                        <div>
+                            <span>Jarak</span>
+                            <strong id="astar-distance">-</strong>
+                        </div>
+                        <div>
+                            <span>Node</span>
+                            <strong id="astar-visited">-</strong>
+                        </div>
+                        <div>
+                            <span>Waktu</span>
+                            <strong id="astar-time">-</strong>
+                        </div>
+                    </div>
+                    <p class="algorithm-message" id="astar-message">-</p>
+                </article>
+
+                <article class="algorithm-card bfs-card">
+                    <div class="algorithm-card-header">
+                        <span>BFS</span>
+                        <i class="fa-solid fa-diagram-project"></i>
+                    </div>
+                    <p class="facility-name" id="bfs-facility">-</p>
+                    <div class="algorithm-metrics">
+                        <div>
+                            <span>Jarak</span>
+                            <strong id="bfs-distance">-</strong>
+                        </div>
+                        <div>
+                            <span>Node</span>
+                            <strong id="bfs-visited">-</strong>
+                        </div>
+                        <div>
+                            <span>Waktu</span>
+                            <strong id="bfs-time">-</strong>
+                        </div>
+                    </div>
+                    <p class="algorithm-message" id="bfs-message">-</p>
+                </article>
+            </div>
+
+            <p class="comparison-summary" id="comparison-summary">-</p>
+
+            <div class="comparison-table-wrap">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Metrik</th>
+                            <th>A*</th>
+                            <th>BFS</th>
+                            <th>Pemenang</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparison-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Compact Single Algorithm Tree Panel -->
+    <aside id="single-tree-panel" class="single-tree-panel hidden">
+        <div class="single-tree-header">
+            <div>
+                <h3 id="single-tree-title">Tree Algoritma</h3>
+                <p id="single-tree-status">Menunggu pencarian</p>
+            </div>
+            <button type="button" id="close-single-tree" class="btn-icon" aria-label="Tutup panel tree">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="single-result-summary">
+            <p id="single-facility">-</p>
+            <div class="single-result-metrics">
+                <span id="single-distance">-</span>
+                <span id="single-visited">-</span>
+                <span id="single-time">-</span>
+            </div>
+        </div>
+
+        <div id="single-tree" class="tree-diagram single-tree-diagram"></div>
+    </aside>
+
     <!-- Leaflet.js Script -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- D3.js Script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <!-- Custom JS -->
-    <script src="app.js"></script>
+    <script src="app.js?v=13"></script>
 </body>
 </html>
