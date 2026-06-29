@@ -1,6 +1,6 @@
-# BloodFinder - Sistem Pencarian Donor Darah
+# DarahNet - Sistem Pencarian Donor Darah
 
-BloodFinder adalah aplikasi web untuk mencari fasilitas donor darah terdekat berdasarkan lokasi awal, golongan darah, jumlah kantong, dan waktu pencarian. Aplikasi ini memakai FastAPI sebagai backend dan Leaflet sebagai peta interaktif di frontend.
+DarahNet adalah aplikasi web untuk mencari fasilitas donor darah terdekat berdasarkan lokasi awal, golongan darah, jumlah kantong, dan waktu pencarian. Aplikasi ini memakai FastAPI sebagai backend dan Leaflet sebagai peta interaktif di frontend.
 
 ## Fitur Utama
 

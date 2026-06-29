@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Pencarian Donor Darah (A* & BFS)</title>
+    <title>DarahNet - Sistem Pencarian Donor Darah</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,6 +14,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css?v=13">
+    <!-- Icon -->
+    <link rel="icon" href="data:,">
 </head>
 <body>
     <div class="app-container">
@@ -22,7 +24,7 @@
             <div class="sidebar-header">
                 <div class="logo-area">
                     <i class="fa-solid fa-droplet icon-droplet"></i>
-                    <h2>BloodFinder</h2>
+                    <h2>DarahNet</h2>
                 </div>
                 <p class="subtitle">Sistem Pencarian Donor Darah Rute Terdekat</p>
             </div>
@@ -91,13 +93,14 @@
                         <li><span class="legend-color pmi"></span> UTD PMI</li>
                         <li><span class="legend-color volunteer"></span> Donor Sukarela</li>
                         <li><span class="legend-color graph-edge"></span> Edge Graf</li>
-                        <li><span class="legend-color path"></span> Jalur Rute Hasil Pencarian</li>
+                        <li><span class="legend-color route-astar"></span> Rute A*</li>
+                        <li><span class="legend-color route-bfs"></span> Rute BFS</li>
                     </ul>
                 </div>
             </div>
             
             <div class="sidebar-footer">
-                <p>&copy; 2026 BloodFinder A* &amp; BFS</p>
+                <p>&copy; 2026 DarahNet A* &amp; BFS</p>
             </div>
         </aside>
 
@@ -239,3 +242,5 @@
     <script src="app.js?v=13"></script>
 </body>
 </html>
+
+

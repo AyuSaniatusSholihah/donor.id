@@ -180,6 +180,12 @@ select:focus, input:focus {
     box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.15);
 }
 
+input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.5);
+    opacity: 0.9;
+    cursor: pointer;
+}
+
 .checkbox-control {
     display: flex;
     align-items: center;
@@ -841,17 +847,25 @@ select:focus, input:focus {
 .legend-color.volunteer { background-color: #10b981; }
 .legend-color.graph-edge {
     background-color: transparent;
-    border-top: 2px solid rgba(148, 163, 184, 0.9);
+    border-top: 2px dashed rgba(148, 163, 184, 0.9);
     border-radius: 0;
     width: 20px;
     height: 0;
 }
-.legend-color.path {
+.legend-color.route-astar,
+.legend-color.route-bfs {
     background-color: transparent;
-    border-top: 3px dashed #f59e0b;
     border-radius: 0;
-    width: 20px;
+    width: 22px;
     height: 0;
+}
+
+.legend-color.route-astar {
+    border-top: 3px solid var(--route-blue);
+}
+
+.legend-color.route-bfs {
+    border-top: 3px solid var(--route-orange);
 }
 
 .map-route-legend {
@@ -1034,3 +1048,6 @@ select:focus, input:focus {
         height: 52vh;
     }
 }
+
+
+
