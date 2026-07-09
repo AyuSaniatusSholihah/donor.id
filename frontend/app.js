@@ -521,7 +521,12 @@ function animateSingleGlobalMap(result, color, dashArray) {
     const routeDelay = visitedNodes.length * 300 + 180;
 
     if (result.success && Array.isArray(result.path) && result.path.length > 1) {
-        const latlngs = result.path.map(node => [node.lat, node.lon]);
+        // Gunakan path_geometry (jalan nyata dari OSRM) jika tersedia,
+        // fallback ke garis lurus antar node
+        const latlngs = (result.path_geometry && result.path_geometry.length >= 2)
+            ? result.path_geometry
+            : result.path.map(node => [node.lat, node.lon]);
+
         const exploredLatLngs = visitedNodes.map(node => [node.lat, node.lon]);
         map.fitBounds(L.latLngBounds([...latlngs, ...exploredLatLngs]), getSingleMapFitOptions());
 
@@ -623,7 +628,12 @@ function animateAlgorithmMap(key, result, color, dashArray) {
     const routeDelay = visitedNodes.length * 300 + 180;
 
     if (result.success && Array.isArray(result.path) && result.path.length > 1) {
-        const latlngs = result.path.map(node => [node.lat, node.lon]);
+        // Gunakan path_geometry (jalan nyata dari OSRM) jika tersedia,
+        // fallback ke garis lurus antar node
+        const latlngs = (result.path_geometry && result.path_geometry.length >= 2)
+            ? result.path_geometry
+            : result.path.map(node => [node.lat, node.lon]);
+
         targetMap.fitBounds(L.latLngBounds(latlngs), { padding: [28, 28] });
 
         const routeTimer = setTimeout(() => {
