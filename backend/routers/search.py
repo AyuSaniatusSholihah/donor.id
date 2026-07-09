@@ -19,6 +19,8 @@ from data.loader import load_graph_from_json
 from algorithms.bfs import bfs_search
 # pyrefly: ignore [missing-import]
 from algorithms.astar import astar_search
+# pyrefly: ignore [missing-import]
+from data.osrm_router import get_path_geometry
 
 router = APIRouter()
 
@@ -52,6 +54,7 @@ class NodeDetail(BaseModel):
 class SearchResult(BaseModel):
     algorithm: str
     path: Optional[List[NodeDetail]]
+    path_geometry: Optional[List[List[float]]]   # [[lat, lon], ...] koordinat rute jalan nyata
     visited_nodes: List[NodeDetail]
     visited_count: int                          # jumlah node yang dikunjungi
     distance: float                             # km, total jarak sepanjang path
@@ -163,10 +166,17 @@ def search_blood(
     path_detail          = [_node_to_detail(nid) for nid in path_ids] if path_ids else None
     recommended          = _node_to_detail(target_id) if target_id else None
 
+    # Bangun geometry rute jalan nyata (list of [lat, lon]) untuk Leaflet
+    path_geometry: Optional[List[List[float]]] = None
+    if path_ids and len(path_ids) >= 2:
+        waypoints = [(graph.get_node(nid).lat, graph.get_node(nid).lon) for nid in path_ids]
+        path_geometry = get_path_geometry(waypoints)
+
     if not target_id:
         return SearchResult(
             algorithm=algorithm,
             path=None,
+            path_geometry=None,
             visited_nodes=visited_nodes_detail,
             visited_count=len(visited_ids),
             distance=0.0,
@@ -184,6 +194,7 @@ def search_blood(
     return SearchResult(
         algorithm=algorithm,
         path=path_detail,
+        path_geometry=path_geometry,
         visited_nodes=visited_nodes_detail,
         visited_count=len(visited_ids),
         distance=round(total_distance, 4),
