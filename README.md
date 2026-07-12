@@ -1,6 +1,6 @@
-# DonorinSolo — Sistem Pencarian Donor Darah
+# DarahNet — Sistem Pencarian Donor Darah
 
-DonorinSolo adalah aplikasi web untuk mencari fasilitas donor darah terdekat berdasarkan lokasi awal, golongan darah, jumlah kantong, dan waktu pencarian. Backend menggunakan FastAPI + algoritma A* / BFS, frontend menggunakan Leaflet dengan visualisasi rute **jalan nyata** dari OpenStreetMap (via OSRM).
+DarahNet adalah aplikasi web untuk mencari fasilitas donor darah terdekat berdasarkan lokasi awal, golongan darah, jumlah kantong, dan waktu pencarian. Backend menggunakan FastAPI + algoritma A* / BFS, frontend menggunakan Leaflet dengan visualisasi rute **jalan nyata** dari OpenStreetMap (via OSRM).
 
 ---
 
@@ -32,7 +32,7 @@ DonorinSolo adalah aplikasi web untuk mencari fasilitas donor darah terdekat ber
 ## Struktur Project
 
 ```text
-donor_darah/
+donor.id/
   backend/
     algorithms/
       astar.py          ← Implementasi A*
@@ -135,7 +135,7 @@ Setelah Python terinstall, library berikut akan diinstall otomatis dengan perint
 
 ---
 
-### Ringkasan: Apa yang Perlu Didownload?
+## Ringkasan: Apa yang Perlu Didownload?
 
 | Software | Wajib? | Link Download |
 |----------|--------|---------------|
@@ -154,10 +154,10 @@ Jika menggunakan Git:
 
 ```bash
 git clone <url-repo>
-cd donor_darah
+cd donor.id
 ```
 
-Atau extract ZIP lalu buka folder `donor_darah`.
+Atau extract ZIP lalu buka folder `donor.id`.
 
 ---
 
