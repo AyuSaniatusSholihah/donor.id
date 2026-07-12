@@ -1,6 +1,10 @@
+import logging
+
 # pyrefly: ignore [missing-import]
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class OperationalHours(BaseModel):
@@ -26,7 +30,11 @@ class OperationalHours(BaseModel):
             if close_val < open_val:  # Spans overnight
                 return curr_val >= open_val or curr_val <= close_val
             return open_val <= curr_val <= close_val
-        except Exception:
+        except ValueError as e:
+            logger.warning(
+                "Format waktu tidak valid di is_open('%s'): %s",
+                current_time, e
+            )
             return False
 
 class BaseNode(BaseModel):

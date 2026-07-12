@@ -4,7 +4,7 @@ Implementasi algoritma A* untuk sistem DonorinSolo.
 f(n) = g(n) + h(n)
 
   g(n) : biaya nyata dari start ke node n
-         (akumulasi jarak Haversine edge yang telah dilalui, dalam km)+
+         (akumulasi jarak jalan nyata (OSRM) edge yang telah dilalui, dalam km)
   h(n) : estimasi multi-criteria dari node n ke goal
          0.6 × Haversine(n → target terdekat yang valid)
          + 0.3 × (1 − skor_stok)
@@ -44,7 +44,8 @@ def astar_search(
         visited_list     : urutan node_id yang di-expand (di-pop dari priority queue)
         total_distance   : total jarak aktual sepanjang path (km)
         target_id        : node_id tujuan (None jika tidak ditemukan)
-        heuristic_details: dict {node_id: {node, g, h, f}} untuk animasi Leaflet
+        heuristic_details: dict {node_id: {node, parent, g, h, f}} untuk animasi Leaflet
+                           parent = node_id dari mana node ini dicapai (None untuk start node)
     """
     if start_id not in graph.nodes:
         return None, [], 0.0, None, {}
@@ -60,6 +61,9 @@ def astar_search(
 
     # g_score: jarak aktual terbaik yang diketahui dari start ke tiap node
     g_score: Dict[str, float] = {start_id: 0.0}
+
+    # came_from: dari mana setiap node dicapai (untuk pohon traversal frontend)
+    came_from: Dict[str, Optional[str]] = {start_id: None}
 
     # Detail g/h/f untuk setiap node yang di-expand (untuk Leaflet)
     heuristic_details: HeuristicDetails = {}
@@ -94,6 +98,7 @@ def astar_search(
         # Catat detail g/h/f node ini untuk visualisasi Leaflet
         heuristic_details[curr_id] = {
             "node": curr_node.name,
+            "parent": came_from.get(curr_id),
             "g": round(g, 4),
             "h": round(h_curr, 4),
             "f": round(g + h_curr, 4),
@@ -117,6 +122,7 @@ def astar_search(
 
             if neighbor_id not in g_score or tentative_g < g_score[neighbor_id]:
                 g_score[neighbor_id] = tentative_g
+                came_from[neighbor_id] = curr_id
                 neighbor_node = graph.get_node(neighbor_id)
                 h = compute_heuristic(
                     neighbor_node, graph, bt, qty, current_time, max_stock

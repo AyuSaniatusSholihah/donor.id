@@ -15,10 +15,12 @@ let explorationMapLayers = { astar: [], bfs: [] };
 let explorationConnectionLayers = { astar: [], bfs: [] };
 
 const API_BASE = getApiBase();
-const ASTAR_COLOR = "#2196F3";
-const BFS_COLOR = "#FF9800";
+const ASTAR_COLOR       = "#2196F3";   // warna node eksplorasi A*
+const BFS_COLOR         = "#FF9800";   // warna node eksplorasi BFS
+const ASTAR_ROUTE_COLOR = "#00E5FF";   // warna jalur rute A* (cyan)
+const BFS_ROUTE_COLOR   = "#FF4081";   // warna jalur rute BFS (pink)
 const START_COLOR = "#94a3b8";
-const GOAL_COLOR = "#22c55e";
+const GOAL_COLOR  = "#22c55e";
 
 // Initialize Map and Load Graph
 document.addEventListener("DOMContentLoaded", () => {
@@ -286,13 +288,14 @@ async function runSingleAlgorithmSearch(params, bloodType, startId, algorithm) {
     }
 
     const result = await response.json();
-    const color = algorithm === "astar" ? ASTAR_COLOR : BFS_COLOR;
+    const nodeColor  = algorithm === "astar" ? ASTAR_COLOR       : BFS_COLOR;
+    const routeColor = algorithm === "astar" ? ASTAR_ROUTE_COLOR : BFS_ROUTE_COLOR;
     const dashArray = null;
 
     document.getElementById("comparison-panel").classList.add("hidden");
     prepareSingleTreePanel(result, bloodType, algorithm);
 
-    const mapDuration = animateSingleGlobalMap(result, color, dashArray);
+    const mapDuration = animateSingleGlobalMap(result, nodeColor, routeColor, dashArray);
     const treeDuration = renderSingleTraversalTree(result, startId, algorithm);
     const doneDelay = Math.max(mapDuration, treeDuration) + 150;
 
@@ -509,35 +512,46 @@ function buildEfficiencySummary(astarResult, bfsResult) {
 function animateMapComparison(astarResult, bfsResult) {
     ensureExplorationMaps();
 
-    const astarDuration = animateAlgorithmMap("astar", astarResult, ASTAR_COLOR, null);
-    const bfsDuration = animateAlgorithmMap("bfs", bfsResult, BFS_COLOR, null);
+    const astarDuration = animateAlgorithmMap("astar", astarResult, ASTAR_COLOR, ASTAR_ROUTE_COLOR, null);
+    const bfsDuration   = animateAlgorithmMap("bfs",   bfsResult,   BFS_COLOR,   BFS_ROUTE_COLOR,   null);
 
     return Math.max(astarDuration, bfsDuration);
 }
 
-function animateSingleGlobalMap(result, color, dashArray) {
+function animateSingleGlobalMap(result, nodeColor, routeColor, dashArray) {
     const visitedNodes = result.visited_nodes || [];
     const targetId = result.recommended_node?.id;
     const routeDelay = visitedNodes.length * 300 + 180;
 
+    // Kumpulkan semua koordinat untuk fitBounds:
+    // selalu sertakan semua node yang dikunjungi agar zoom mencakup area eksplorasi penuh
+    const boundsCoords = visitedNodes.map(node => [node.lat, node.lon]);
+
+    let latlngs = null;
     if (result.success && Array.isArray(result.path) && result.path.length > 1) {
-        // Gunakan path_geometry (jalan nyata dari OSRM) jika tersedia,
-        // fallback ke garis lurus antar node
-        const latlngs = (result.path_geometry && result.path_geometry.length >= 2)
+        latlngs = (result.path_geometry && result.path_geometry.length >= 2)
             ? result.path_geometry
             : result.path.map(node => [node.lat, node.lon]);
 
-        const exploredLatLngs = visitedNodes.map(node => [node.lat, node.lon]);
-        map.fitBounds(L.latLngBounds([...latlngs, ...exploredLatLngs]), getSingleMapFitOptions());
+        // Tambahkan koordinat rute ke bounds
+        boundsCoords.push(...latlngs);
+    }
 
+    // Zoom peta mencakup seluruh area eksplorasi + rute
+    if (boundsCoords.length > 0) {
+        map.fitBounds(L.latLngBounds(boundsCoords), getSingleMapFitOptions());
+    }
+
+    if (latlngs) {
         const routeTimer = setTimeout(() => {
             const pathLine = L.polyline(latlngs, {
-                color,
+                color: routeColor,
                 weight: 5,
                 opacity: 0.95,
                 dashArray
             }).addTo(map);
             pathLines.push(pathLine);
+            pathLine.bringToBack();
 
             if (targetId) {
                 const targetPin = document.getElementById(`pin-${targetId}`);
@@ -556,8 +570,8 @@ function animateSingleGlobalMap(result, color, dashArray) {
 
             const marker = L.circleMarker([node.lat, node.lon], {
                 radius: 7,
-                color,
-                fillColor: color,
+                color: nodeColor,
+                fillColor: nodeColor,
                 fillOpacity: 0.9,
                 weight: 2,
                 opacity: 1
@@ -612,7 +626,7 @@ function fitExplorationMapsToNodes() {
     });
 }
 
-function animateAlgorithmMap(key, result, color, dashArray) {
+function animateAlgorithmMap(key, result, nodeColor, routeColor, dashArray) {
     const targetMap = explorationMaps[key];
     if (!targetMap) return 0;
 
@@ -627,23 +641,33 @@ function animateAlgorithmMap(key, result, color, dashArray) {
     const targetId = result.recommended_node?.id;
     const routeDelay = visitedNodes.length * 300 + 180;
 
+    // Kumpulkan bounds dari semua node yang dikunjungi + rute
+    const boundsCoords = visitedNodes.map(node => [node.lat, node.lon]);
+
+    let latlngs = null;
     if (result.success && Array.isArray(result.path) && result.path.length > 1) {
-        // Gunakan path_geometry (jalan nyata dari OSRM) jika tersedia,
-        // fallback ke garis lurus antar node
-        const latlngs = (result.path_geometry && result.path_geometry.length >= 2)
+        latlngs = (result.path_geometry && result.path_geometry.length >= 2)
             ? result.path_geometry
             : result.path.map(node => [node.lat, node.lon]);
 
-        targetMap.fitBounds(L.latLngBounds(latlngs), { padding: [28, 28] });
+        boundsCoords.push(...latlngs);
+    }
 
+    // Zoom mini map mencakup seluruh area eksplorasi + rute
+    if (boundsCoords.length > 0) {
+        targetMap.fitBounds(L.latLngBounds(boundsCoords), { padding: [28, 28] });
+    }
+
+    if (latlngs) {
         const routeTimer = setTimeout(() => {
             const route = L.polyline(latlngs, {
-                color,
+                color: routeColor,
                 weight: 4,
                 opacity: 0.96,
                 dashArray
             }).addTo(targetMap);
             explorationMapLayers[key].push(route);
+            route.bringToBack();
         }, routeDelay);
         animationTimers.push(routeTimer);
     }
@@ -654,8 +678,8 @@ function animateAlgorithmMap(key, result, color, dashArray) {
 
             const marker = L.circleMarker([node.lat, node.lon], {
                 radius: node.id === targetId ? 8 : 6,
-                color: node.id === targetId ? GOAL_COLOR : color,
-                fillColor: node.id === targetId ? GOAL_COLOR : color,
+                color: node.id === targetId ? GOAL_COLOR : nodeColor,
+                fillColor: node.id === targetId ? GOAL_COLOR : nodeColor,
                 fillOpacity: 0.9,
                 weight: node.id === targetId ? 3 : 2,
                 opacity: 1
@@ -737,64 +761,11 @@ function clearExplorationMapLayers(key) {
     explorationMapLayers[key] = [];
 }
 
-function drawRoute(result, color, dashArray) {
-    if (!result.success || !Array.isArray(result.path) || result.path.length < 2) return;
-
-    const latlngs = result.path.map(node => [node.lat, node.lon]);
-    const pathLine = L.polyline(latlngs, {
-        color,
-        weight: 4,
-        opacity: 0.95,
-        dashArray
-    }).addTo(map);
-    pathLines.push(pathLine);
-}
-
-function animateVisitedNodes(nodes, color, startDelay, targetId) {
-    nodes.forEach((node, index) => {
-        const timer = setTimeout(() => {
-            if (!node || node.id === targetId) return;
-
-            const marker = L.circleMarker([node.lat, node.lon], {
-                radius: 6,
-                color,
-                fillColor: color,
-                fillOpacity: 0.88,
-                weight: 2,
-                opacity: 1
-            }).addTo(map);
-            marker.bindTooltip(node.name, { direction: "top", offset: [0, -6] });
-            animatedMarkers.push(marker);
-        }, startDelay + (index * 300));
-        animationTimers.push(timer);
-    });
-
-    return nodes.length * 300;
-}
-
-function highlightGoalLater(nodeId, delay) {
-    if (!nodeId) return;
-    const timer = setTimeout(() => {
-        highlightPin(nodeId, "0 0 24px 6px rgba(34, 197, 94, 0.95)");
-        const pin = document.getElementById(`pin-${nodeId}`);
-        if (pin) pin.classList.add("highlighted");
-    }, delay);
-    animationTimers.push(timer);
-}
-
 function highlightPin(nodeId, boxShadow) {
     const pin = document.getElementById(`pin-${nodeId}`);
     if (pin) {
         pin.style.boxShadow = boxShadow;
         pin.style.transition = "box-shadow 0.3s ease";
-    }
-}
-
-function fitMapToResults(...results) {
-    const routeLines = pathLines.filter(Boolean);
-    if (routeLines.length > 0) {
-        const group = L.featureGroup(routeLines);
-        map.fitBounds(group.getBounds(), { padding: [60, 60] });
     }
 }
 
@@ -807,11 +778,12 @@ function addRouteLegend() {
     routeLegend.onAdd = function onAddLegend() {
         const div = L.DomUtil.create("div", "map-route-legend");
         div.innerHTML = `
-            <h4>Rute & Eksplorasi</h4>
-            <div><span class="legend-line"></span> Rute A*</div>
-            <div><span class="legend-line bfs"></span> Rute BFS</div>
-            <div><span class="legend-dot"></span> Node A*</div>
-            <div><span class="legend-dot bfs"></span> Node BFS</div>
+            <h4>Legenda Peta</h4>
+            <div><span class="legend-line astar-route"></span> Jalur Rute A*</div>
+            <div><span class="legend-line bfs-route"></span> Jalur Rute BFS</div>
+            <div><span class="legend-dot astar-node"></span> Node Eksplorasi A*</div>
+            <div><span class="legend-dot bfs-node"></span> Node Eksplorasi BFS</div>
+            <div><span class="legend-dot goal-node"></span> Fasilitas Tujuan</div>
         `;
         return div;
     };
@@ -858,7 +830,7 @@ function renderTree(containerSelector, result, startId, algorithm, startDelay = 
         return startDelay;
     }
 
-    const treeData = buildTreeData(visitedNodes, startId, result.recommended_node?.id);
+    const treeData = buildTreeData(visitedNodes, startId, result.recommended_node?.id, result.heuristic_details || {});
     const nodeCount = visitedNodes.length;
     const containerWidth = container.node()?.clientWidth || 320;
     const compact = Boolean(options.compact);
@@ -924,14 +896,17 @@ function renderTree(containerSelector, result, startId, algorithm, startDelay = 
     return startDelay + (visitedNodes.length * stepDelay) + 260;
 }
 
-function buildTreeData(visitedNodes, startId, goalId) {
+function buildTreeData(visitedNodes, startId, goalId, heuristicDetails) {
     const rootNode = visitedNodes[0] || nodesData[startId];
     const root = createTreeNode(rootNode, 0, startId, goalId);
     const treeNodeById = { [root.id]: root };
 
     visitedNodes.slice(1).forEach((node, index) => {
         const treeNode = createTreeNode(node, index + 1, startId, goalId);
-        const parent = findTreeParent(node.id, visitedNodes.slice(0, index + 1), treeNodeById, root);
+        // Gunakan parent yang dikirim backend (came_from), bukan koneksi graph asli
+        const detail = (heuristicDetails || {})[node.id] || {};
+        const parentId = detail.parent;
+        const parent = (parentId && treeNodeById[parentId]) ? treeNodeById[parentId] : root;
         parent.children.push(treeNode);
         treeNodeById[node.id] = treeNode;
     });
@@ -951,22 +926,7 @@ function createTreeNode(node, order, startId, goalId) {
     };
 }
 
-function findTreeParent(nodeId, previousNodes, treeNodeById, root) {
-    for (let i = previousNodes.length - 1; i >= 0; i -= 1) {
-        const previous = previousNodes[i];
-        if (areConnected(previous.id, nodeId) && treeNodeById[previous.id]) {
-            return treeNodeById[previous.id];
-        }
-    }
-    return root;
-}
 
-function areConnected(fromId, toId) {
-    return edgesData.some(edge => (
-        (edge.from === fromId && edge.to === toId) ||
-        (edge.from === toId && edge.to === fromId)
-    ));
-}
 
 function getTreeDepth(node) {
     if (!node.children || node.children.length === 0) return 2;

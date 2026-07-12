@@ -259,7 +259,7 @@ http://localhost:8000/docs
 3. **Isi Jumlah Kantong** — minimal 1.
 4. **Atur Waktu** — default waktu lokal saat ini.
 5. **Pilih Mode Pencarian**:
-   - `A* saja` — tampilkan rute terbaik dengan A*
+   - `A* saja` — tampilkan rute terbaik dengan A* (multi-kriteria: jarak + stok + jam)
    - `BFS saja` — tampilkan rute dengan BFS
    - `Bandingkan A* vs BFS` — tampilkan kedua algoritma secara berdampingan
 6. Klik **Cari Fasilitas**.
@@ -329,6 +329,8 @@ GET /api/search?start_id=node_1&blood_type=A&qty=2&current_time=09:00&algorithm=
   "message": "[ASTAR] Ditemukan: RS Hermina Solo | Jarak: 0.51 km | ..."
 }
 ```
+
+> **Catatan:** `distance` merupakan jarak jalan nyata **langsung dari titik awal ke fasilitas tujuan** (OSRM direct route), bukan penjumlahan bobot edge yang dilalui algoritma. Ini mencerminkan jarak berkendara yang sebenarnya dibutuhkan pengguna.
 
 ---
 

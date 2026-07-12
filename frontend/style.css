@@ -8,6 +8,8 @@
     --accent-blue: #38bdf8;
     --route-blue: #2196F3;
     --route-orange: #FF9800;
+    --route-astar: #00E5FF;
+    --route-bfs: #FF4081;
     --accent-green: #10b981;
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
@@ -842,9 +844,8 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     display: inline-block;
 }
 
-.legend-color.rs { background-color: #ef4444; }
-.legend-color.pmi { background-color: #3b82f6; }
-.legend-color.volunteer { background-color: #10b981; }
+.legend-color.rs        { background-color: #ef4444; }
+.legend-color.pmi       { background-color: #3b82f6; }
 .legend-color.graph-edge {
     background-color: transparent;
     border-top: 2px dashed rgba(148, 163, 184, 0.9);
@@ -860,13 +861,11 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     height: 0;
 }
 
-.legend-color.route-astar {
-    border-top: 3px solid var(--route-blue);
-}
-
-.legend-color.route-bfs {
-    border-top: 3px solid var(--route-orange);
-}
+.legend-color.route-astar { border-top: 3px solid var(--route-astar); }
+.legend-color.route-bfs   { border-top: 3px solid var(--route-bfs); }
+.legend-color.node-astar  { background-color: var(--route-blue); }
+.legend-color.node-bfs    { background-color: var(--route-orange); }
+.legend-color.goal        { background-color: #22c55e; }
 
 .map-route-legend {
     padding: 10px 12px;
@@ -898,23 +897,35 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     display: inline-block;
     width: 26px;
     height: 0;
-    border-top: 4px solid var(--route-blue);
+    border-top: 4px solid transparent;
 }
 
-.legend-line.bfs {
-    border-top-color: var(--route-orange);
+.legend-line.astar-route {
+    border-top-color: var(--route-astar);
+}
+
+.legend-line.bfs-route {
+    border-top-color: var(--route-bfs);
 }
 
 .legend-dot {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background-color: var(--route-blue);
     display: inline-block;
+    background-color: transparent;
 }
 
-.legend-dot.bfs {
+.legend-dot.astar-node {
+    background-color: var(--route-blue);
+}
+
+.legend-dot.bfs-node {
     background-color: var(--route-orange);
+}
+
+.legend-dot.goal-node {
+    background-color: #22c55e;
 }
 
 .sidebar-footer {

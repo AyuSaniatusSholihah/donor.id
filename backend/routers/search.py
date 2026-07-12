@@ -3,6 +3,7 @@ Router FastAPI untuk pencarian donor darah menggunakan A* dan BFS.
 """
 
 import os
+import re
 import time
 from typing import Any, Dict, List, Optional
 
@@ -20,7 +21,7 @@ from algorithms.bfs import bfs_search
 # pyrefly: ignore [missing-import]
 from algorithms.astar import astar_search
 # pyrefly: ignore [missing-import]
-from data.osrm_router import get_path_geometry
+from data.osrm_router import get_path_geometry, get_road_distance
 
 router = APIRouter()
 
@@ -57,10 +58,10 @@ class SearchResult(BaseModel):
     path_geometry: Optional[List[List[float]]]   # [[lat, lon], ...] koordinat rute jalan nyata
     visited_nodes: List[NodeDetail]
     visited_count: int                          # jumlah node yang dikunjungi
-    distance: float                             # km, total jarak sepanjang path
+    distance: float                             # km, jarak jalan nyata langsung start → goal (OSRM direct route)
     execution_time_ms: float                    # waktu eksekusi dalam milidetik
     recommended_node: Optional[NodeDetail]      # node tujuan yang direkomendasikan
-    heuristic_details: Dict[str, Any]           # {node_id: {node, g, h, f}}
+    heuristic_details: Dict[str, Any]           # {node_id: {node, parent, g, h, f}}
     success: bool
     message: str
 
@@ -130,10 +131,12 @@ def search_blood(
     **Format `heuristic_details`:**
     ```json
     {
-      "node_1": {"node": "PMI Kota Surakarta", "g": 0.0, "h": 0.72, "f": 0.72},
-      "node_9": {"node": "RS Hermina Solo",    "g": 2.31, "h": 1.44, "f": 3.75}
+      "node_1": {"node": "PMI Kota Surakarta", "parent": null,     "g": 0.0,  "h": 0.72, "f": 0.72},
+      "node_9": {"node": "RS Hermina Solo",    "parent": "node_1", "g": 2.31, "h": 1.44, "f": 3.75}
     }
     ```
+    `parent` berisi `node_id` dari mana node ini dicapai (null untuk start node).
+    Gunakan `parent` untuk membangun pohon traversal yang akurat di frontend.
     Gunakan urutan `visited_nodes` untuk menganimasikan eksplorasi langkah demi langkah.
     """
     blood_type = blood_type.strip().upper()
@@ -146,6 +149,14 @@ def search_blood(
         raise HTTPException(status_code=400, detail="Golongan darah harus A, B, AB, atau O.")
     if algorithm not in ("astar", "bfs"):
         raise HTTPException(status_code=400, detail="Algoritma harus 'astar' atau 'bfs'.")
+    if not re.match(r"^([01]\d|2[0-3]):([0-5]\d)$", current_time):
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"Format current_time tidak valid: '{current_time}'. "
+                "Gunakan format HH:MM (00:00\u201323:59)."
+            )
+        )
 
     # --- Jalankan algoritma & ukur waktu eksekusi ---
     t_start = time.perf_counter()
@@ -166,11 +177,16 @@ def search_blood(
     path_detail          = [_node_to_detail(nid) for nid in path_ids] if path_ids else None
     recommended          = _node_to_detail(target_id) if target_id else None
 
-    # Bangun geometry rute jalan nyata (list of [lat, lon]) untuk Leaflet
+    # Bangun geometry rute jalan nyata langsung dari start ke goal (tanpa melewati node perantara).
+    # Fase pencarian (A*/BFS) menentukan fasilitas mana yang dituju;
+    # fase navigasi ini hanya menghitung rute berkendara dari titik awal ke tujuan tersebut.
     path_geometry: Optional[List[List[float]]] = None
+    direct_distance: float = total_distance  # default: gunakan jarak graf jika OSRM gagal
     if path_ids and len(path_ids) >= 2:
-        waypoints = [(graph.get_node(nid).lat, graph.get_node(nid).lon) for nid in path_ids]
-        path_geometry = get_path_geometry(waypoints)
+        s = graph.get_node(path_ids[0])
+        g = graph.get_node(path_ids[-1])
+        path_geometry   = get_path_geometry([(s.lat, s.lon), (g.lat, g.lon)])
+        direct_distance = get_road_distance(s.lat, s.lon, g.lat, g.lon)
 
     if not target_id:
         return SearchResult(
@@ -197,14 +213,14 @@ def search_blood(
         path_geometry=path_geometry,
         visited_nodes=visited_nodes_detail,
         visited_count=len(visited_ids),
-        distance=round(total_distance, 4),
+        distance=round(direct_distance, 4),
         execution_time_ms=round(execution_time_ms, 4),
         recommended_node=recommended,
         heuristic_details=h_details,
         success=True,
         message=(
             f"[{algorithm.upper()}] Ditemukan: {target_name} | "
-            f"Jarak: {round(total_distance, 2)} km | "
+            f"Jarak: {round(direct_distance, 2)} km | "
             f"Node dikunjungi: {len(visited_ids)} | "
             f"Waktu: {round(execution_time_ms, 3)} ms"
         ),

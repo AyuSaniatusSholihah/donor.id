@@ -36,9 +36,11 @@ def bfs_search(
     Returns:
         path             : daftar node_id dari start ke target (None jika tidak ditemukan)
         visited_list     : urutan node_id yang dikunjungi (level-order)
-        total_distance   : total jarak aktual sepanjang path (km)
+        total_distance   : total jarak km sepanjang path yang ditemukan BFS
+                           (bukan jarak km minimum — BFS menjamin hop minimum, bukan bobot minimum)
         target_id        : node_id tujuan (None jika tidak ditemukan)
-        heuristic_details: dict {node_id: {node, g, h=null, f}} untuk animasi Leaflet
+        heuristic_details: dict {node_id: {node, parent, g, h=null, f}} untuk animasi Leaflet
+                           parent = node_id dari mana node ini dicapai (None untuk start node)
                            BFS tidak menggunakan heuristik, jadi h=null dan f=g.
     """
     if start_id not in graph.nodes:
@@ -54,6 +56,9 @@ def bfs_search(
     # Jarak aktual dari start ke setiap node (diupdate saat enqueue)
     dist_from_start: Dict[str, float] = {start_id: 0.0}
 
+    # came_from: dari mana setiap node dicapai (untuk pohon traversal frontend)
+    came_from: Dict[str, Optional[str]] = {start_id: None}
+
     # Detail g/h/f untuk visualisasi Leaflet (h=None karena BFS tidak pakai heuristik)
     heuristic_details: HeuristicDetails = {}
 
@@ -68,6 +73,7 @@ def bfs_search(
         # Catat detail node untuk Leaflet (h=None karena tidak ada heuristik di BFS)
         heuristic_details[curr_id] = {
             "node": curr_node.name,
+            "parent": came_from.get(curr_id),
             "g": round(g, 4),
             "h": None,       # BFS tidak menggunakan heuristik
             "f": round(g, 4),  # f = g (tanpa h)
@@ -86,6 +92,7 @@ def bfs_search(
         for neighbor_id, edge_dist in graph.get_neighbors(curr_id):
             if neighbor_id not in visited_set:
                 visited_set.add(neighbor_id)
+                came_from[neighbor_id] = curr_id
                 dist_from_start[neighbor_id] = g + edge_dist
                 queue.append(path + [neighbor_id])
 

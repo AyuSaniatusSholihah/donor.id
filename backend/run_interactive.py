@@ -127,7 +127,9 @@ def jalankan_dan_tampilkan(graph, start_id, blood_type, qty, current_time):
         print(f"  Stok {blood_type:<3}             : {target_node.stock.get(blood_type, 0)} kantong")
         print(f"  Jam operasional    : {jam}")
         print(f"  Jalur              : {' -> '.join(path_names)}")
-        print(f"  Total jarak        : {r['dist']:.2f} km")
+        # Catatan: jarak di bawah adalah penjumlahan bobot edge graf (OSRM) sepanjang path traversal.
+        # Berbeda dengan output API web yang menggunakan jarak OSRM langsung start → goal.
+        print(f"  Total jarak (graf) : {r['dist']:.2f} km")
         print(f"  Node dikunjungi    : {len(r['visited'])} -> {r['visited']}")
         print(f"  Waktu eksekusi     : {r['time_ms']:.4f} ms")
 

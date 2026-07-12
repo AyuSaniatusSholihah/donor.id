@@ -1,18 +1,31 @@
 """
 Modul heuristik untuk algoritma A* pada sistem DonorinSolo.
 
-Spesifikasi heuristik:
+Spesifikasi heuristik (multi-criteria weighted heuristic):
 
     h(n) = 0.6 × Haversine(n → target terdekat yang valid)
-           + 0.3 × (1 − skor_stok)
-           + 0.1 × (1 − skor_jam)
+           + 0.3 × (1 − skor_stok_n)
+           + 0.1 × (1 − skor_jam_n)
 
 Keterangan komponen:
   - Haversine(n → target terdekat) : jarak garis lurus (km) ke node tujuan terdekat
                                      yang memiliki stok cukup DAN sedang buka.
-  - skor_stok   = stok_node / max(stok seluruh node) ∈ [0, 1]
-  - skor_jam    = 1.0  jika buka 24 jam
+  - skor_stok_n = stok_node_n / max(stok seluruh node) ∈ [0, 1]
+                  Mengukur kualitas stok node n itu sendiri (bukan goal)
+  - skor_jam_n  = 1.0  jika node n buka 24 jam
                   0.5  jika jam operasional terbatas
+                  Mengukur kualitas jam operasional node n itu sendiri (bukan goal)
+
+Catatan admissibility:
+  Heuristik ini adalah multi-criteria weighted heuristic, BUKAN admissible heuristic
+  dalam pengertian formal (Hart, Nilsson & Raphael, 1968). Komponen penalti non-jarak
+  dapat menyebabkan h(n) > h*(n) pada skenario tertentu (goal sangat dekat, n memiliki
+  stok/jam buruk). Akibatnya A* tidak menjamin menemukan path terpendek berdasarkan km.
+
+  Jaminan yang tetap berlaku:
+    1. A* menemukan fasilitas valid jika ada
+    2. A* mengeksplorasi lebih sedikit node dibanding BFS (heuristik selalu terarah)
+    3. Fasilitas yang ditemukan memenuhi syarat stok dan jam operasional
 """
 
 import math
@@ -95,13 +108,17 @@ def compute_heuristic(
     max_stock: int,
 ) -> float:
     """
-    Multi-criteria heuristic h(n) untuk A*:
+    Multi-criteria weighted heuristic h(n) untuk A*:
 
-        h(n) = 0.6 × Haversine(n → target terdekat)
-               + 0.3 × (1 − skor_stok)
-               + 0.1 × (1 − skor_jam)
+        h(n) = 0.6 × Haversine(n → target terdekat yang valid)
+               + 0.3 × (1 − skor_stok_n)
+               + 0.1 × (1 − skor_jam_n)
 
-    Nilai h(n) yang lebih kecil → node lebih diprioritaskan oleh A*.
+    Perhatian:
+      - skor_stok dan skor_jam dihitung dari properti NODE N ITU SENDIRI,
+        bukan dari goal. Ini berarti node dengan stok besar diprioritaskan
+        dalam eksplorasi, meskipun node tersebut bukan goal.
+      - Nilai h(n) yang lebih kecil → node lebih diprioritaskan oleh A*.
     """
     bt = blood_type.upper()
 
